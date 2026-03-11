@@ -1,5 +1,5 @@
 
-/* Twitch-style Dashboard Layout */
+/* Twitch-style Dashboard Layout - Cleaned Up */
 :root {
   --twitch-bg: #0e0e10;
   --twitch-sidebar: #1f1f23;
@@ -26,11 +26,11 @@ body, html, #root {
   grid-template-areas: 
     "sidebar main"
     "sidebar footer";
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 400px 1fr; /* Expanded chat width */
   grid-template-rows: 1fr 100px;
 }
 
-/* Left: Chat Feed (Sidebar area) */
+/* Left: Full Chat Window */
 .cs-sidebar--left, 
 .cs-conversation-list,
 .cs-main-container > div:first-child {
@@ -42,18 +42,38 @@ body, html, #root {
   position: relative !important;
   display: flex !important;
   flex-direction: column !important;
+  overflow: hidden !important;
 }
 
-/* Hide unnecessary sidebars/panels */
+/* 1. Remove Elements (Clean-up) */
+/* Hide camera, screen, browse layouts and icons */
+[class*="Camera"], 
+[class*="Screen"], 
+[class*="Browse"],
+[class*="Microphone"],
+[class*="Idle"],
+[class*="Gesture"],
+.cs-button--videocall,
+.cs-button--voicecall,
+button[aria-label*="camera"],
+button[aria-label*="microphone"],
+button[aria-label*="Toggle microphone"],
+button[aria-label*="Interrupt"],
+/* Floating UI controllers/icons on the left */
+.css-1r0z0z0, 
+[class*="Floating"],
+/* Unnecessary sidebars/panels/overlays */
 aside, 
 .cs-sidebar--right, 
 .cs-expansion-panel,
 .language-selector,
-header {
+header,
+.cs-conversation-header__actions,
+.cs-conversation-header__back {
   display: none !important;
 }
 
-/* Main Area for Live2D and Chat Window */
+/* Main Area for Live2D */
 .cs-main-container, .cs-chat-container {
   grid-area: main;
   background-color: var(--twitch-main) !important;
@@ -61,6 +81,7 @@ header {
   flex-direction: column !important;
   position: relative !important;
   border: none !important;
+  overflow: hidden !important;
 }
 
 /* Character Position (Right Top) */
@@ -69,19 +90,48 @@ header {
   top: 0 !important;
   right: 0 !important;
   width: auto !important;
-  height: 80% !important;
-  max-width: 60% !important;
+  height: 90% !important; /* Larger character */
+  max-width: 80% !important;
   z-index: 10;
   pointer-events: auto !important;
 }
 
-/* Chat Messages (Streaming screen overlay style) */
+/* 2. Chat UI Implementation */
+/* Message list area (Full Space on the left) */
 .cs-message-list {
-  background-color: transparent !important;
+  background-color: var(--twitch-sidebar) !important;
   flex-grow: 1 !important;
-  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
   padding: 10px !important;
-  z-index: 5 !important;
+  overflow-y: auto !important;
+}
+
+/* Bottom-to-Top flow: Push messages to bottom */
+.cs-message-list__scroll-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  min-height: 100% !important;
+}
+
+/* Individual Message Style */
+.cs-message {
+  margin-bottom: 8px !important;
+  max-width: 100% !important;
+}
+
+.cs-message__content {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--twitch-text) !important;
+  border-radius: 4px !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  font-size: 0.95rem !important;
+}
+
+.cs-message--outgoing .cs-message__content {
+  background-color: var(--twitch-accent) !important;
 }
 
 /* Message Input Area (Bottom) */
@@ -89,27 +139,18 @@ header {
   grid-area: footer;
   background-color: var(--twitch-bg) !important;
   border-top: 1px solid var(--twitch-border) !important;
-  padding: 15px 30px !important;
+  padding: 20px !important;
   display: flex !important;
   align-items: center !important;
-}
-
-/* Twitch-style UI refinements */
-.cs-message__content {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  color: var(--twitch-text) !important;
-  border-radius: 4px !important;
-  border: none !important;
-}
-
-.cs-message--outgoing .cs-message__content {
-  background-color: var(--twitch-accent) !important;
+  z-index: 100 !important;
 }
 
 .cs-message-input__content-editor-wrapper {
   background-color: #1f1f23 !important;
   border: 2px solid transparent !important;
-  transition: border 0.2s !important;
+  border-radius: 6px !important;
+  flex-grow: 1 !important;
+  margin-right: 10px !important;
 }
 
 .cs-message-input__content-editor-wrapper:focus-within {
@@ -122,6 +163,8 @@ header {
   color: white !important;
   border-radius: 4px !important;
   font-weight: bold !important;
+  padding: 8px 20px !important;
+  height: 40px !important;
 }
 
 /* Custom Scrollbar */
