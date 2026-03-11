@@ -1,46 +1,137 @@
 
-/* Kiosk Mode Styles */
-body {
-    overflow: hidden;
-    background-color: transparent !important;
+/* Twitch-style Dashboard Layout */
+:root {
+  --twitch-bg: #0e0e10;
+  --twitch-sidebar: #1f1f23;
+  --twitch-main: #18181b;
+  --twitch-accent: #9147ff;
+  --twitch-text: #efeff1;
+  --twitch-border: #26262c;
 }
 
-/* Hide the control panel/sidebar - common selectors for this app */
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--twitch-bg);
+  color: var(--twitch-text);
+  overflow: hidden;
+  font-family: Inter, Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* Dashboard Grid Layout */
+#root {
+  display: grid !important;
+  grid-template-areas: 
+    "sidebar main"
+    "sidebar footer";
+  grid-template-columns: 350px 1fr;
+  grid-template-rows: 1fr 100px;
+}
+
+/* Left: Chat Feed (Sidebar area) */
+.cs-sidebar--left, 
+.cs-conversation-list,
+.cs-main-container > div:first-child {
+  grid-area: sidebar;
+  background-color: var(--twitch-sidebar) !important;
+  border-right: 1px solid var(--twitch-border) !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Hide unnecessary sidebars/panels */
 aside, 
-.control-panel,
-[class*="sidebar"],
-[class*="Settings"],
-button[aria-label*="Settings"],
-.css-1r0z0z0 /* Potential chakra/panda UI selector for sidebar */
-{
-    display: none !important;
+.cs-sidebar--right, 
+.cs-expansion-panel,
+.language-selector,
+header {
+  display: none !important;
 }
 
-/* Center the Live2D character */
-#live2d, 
-canvas,
-.live2d-container {
-    position: fixed !important;
-    bottom: 0 !important;
-    right: 0 !important;
-    width: 50vw !important; /* Adjust size as needed */
-    height: 80vh !important;
-    z-index: 100;
-    pointer-events: none; /* Allow clicking through if needed, or set to auto */
+/* Main Area for Live2D and Chat Window */
+.cs-main-container, .cs-chat-container {
+  grid-area: main;
+  background-color: var(--twitch-main) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  border: none !important;
 }
 
-/* Position the chat window at the bottom */
-.chat-container,
-[class*="Chat"],
-#chat {
-    position: fixed !important;
-    bottom: 20px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 60% !important;
-    max-height: 30% !important;
-    background: rgba(255, 255, 255, 0.8) !important;
-    border-radius: 15px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    z-index: 200;
+/* Character Position (Right Top) */
+#live2d, canvas, .live2d-container {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  height: 80% !important;
+  max-width: 60% !important;
+  z-index: 10;
+  pointer-events: auto !important;
+}
+
+/* Chat Messages (Streaming screen overlay style) */
+.cs-message-list {
+  background-color: transparent !important;
+  flex-grow: 1 !important;
+  overflow-y: auto !important;
+  padding: 10px !important;
+  z-index: 5 !important;
+}
+
+/* Message Input Area (Bottom) */
+.cs-message-input {
+  grid-area: footer;
+  background-color: var(--twitch-bg) !important;
+  border-top: 1px solid var(--twitch-border) !important;
+  padding: 15px 30px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Twitch-style UI refinements */
+.cs-message__content {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--twitch-text) !important;
+  border-radius: 4px !important;
+  border: none !important;
+}
+
+.cs-message--outgoing .cs-message__content {
+  background-color: var(--twitch-accent) !important;
+}
+
+.cs-message-input__content-editor-wrapper {
+  background-color: #1f1f23 !important;
+  border: 2px solid transparent !important;
+  transition: border 0.2s !important;
+}
+
+.cs-message-input__content-editor-wrapper:focus-within {
+  border-color: var(--twitch-accent) !important;
+  background-color: #000 !important;
+}
+
+.cs-button--send {
+  background-color: var(--twitch-accent) !important;
+  color: white !important;
+  border-radius: 4px !important;
+  font-weight: bold !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #313135;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
 }
