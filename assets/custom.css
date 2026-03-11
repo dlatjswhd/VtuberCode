@@ -1,0 +1,46 @@
+
+/* Kiosk Mode Styles */
+body {
+    overflow: hidden;
+    background-color: transparent !important;
+}
+
+/* Hide the control panel/sidebar - common selectors for this app */
+aside, 
+.control-panel,
+[class*="sidebar"],
+[class*="Settings"],
+button[aria-label*="Settings"],
+.css-1r0z0z0 /* Potential chakra/panda UI selector for sidebar */
+{
+    display: none !important;
+}
+
+/* Center the Live2D character */
+#live2d, 
+canvas,
+.live2d-container {
+    position: fixed !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    width: 50vw !important; /* Adjust size as needed */
+    height: 80vh !important;
+    z-index: 100;
+    pointer-events: none; /* Allow clicking through if needed, or set to auto */
+}
+
+/* Position the chat window at the bottom */
+.chat-container,
+[class*="Chat"],
+#chat {
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 60% !important;
+    max-height: 30% !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    z-index: 200;
+}
