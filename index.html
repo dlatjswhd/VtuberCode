@@ -19,6 +19,19 @@
     </script>
     <meta charset="UTF-8" />
     <title>Open-LLM-Vtuber - Live Streaming</title>
+    <!-- Check if libs are loaded -->
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const checkLibs = () => {
+          const live2dLoaded = typeof window.Live2DCubismCore !== 'undefined';
+          console.log(`[Library Check] Live2D Cubism Core: ${live2dLoaded ? '✅ Loaded' : '❌ NOT LOADED'}`);
+          if (!live2dLoaded) {
+            console.error('Critical: Live2DCubismCore is missing! Character will not render.');
+          }
+        };
+        setTimeout(checkLibs, 2000);
+      });
+    </script>
     <script type="module" crossorigin src="./assets/main-CKgUHFa9.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/main-QEkl09-0.css">
     <link rel="stylesheet" href="./assets/custom.css">
@@ -27,20 +40,21 @@
   <body>
     <div id="root"></div>
 
+    <!-- Connection Status Overlay -->
+    <div id="status-overlay" class="status-overlay status-connecting">
+      서버 연결 중...
+    </div>
+
     <!-- New Custom Chat System Overlay -->
     <div class="new-ui-container">
       <div class="chat-feed-container">
         <div id="chat-messages" class="chat-messages">
           <!-- Messages will appear here -->
-          <div class="chat-msg">
-            <span class="username">System</span>
-            <span class="text">Connecting to Live Streaming system...</span>
-          </div>
         </div>
       </div>
       <div class="input-bar">
-        <input type="text" id="chat-input" placeholder="Enter message to VTuber..." autocomplete="off">
-        <button id="send-btn">SEND</button>
+        <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off">
+        <button id="send-btn">전송</button>
       </div>
     </div>
 
@@ -50,13 +64,19 @@
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
+        const statusOverlay = document.getElementById('status-overlay');
         let socket = null;
         let reconnectTimer = null;
         
-        // Configuration
         const SERVER_HOST = 'bristol-minister-dis-perl.trycloudflare.com';
-        const ENDPOINTS = ['/client-ws', '/ws']; // Try multiple common endpoints if needed
+        const ENDPOINTS = ['/client-ws', '/ws'];
         let currentEndpointIndex = 0;
+
+        function updateStatus(state, text) {
+          statusOverlay.innerText = text;
+          statusOverlay.className = 'status-overlay status-' + state;
+          console.log(`[Status] ${text}`);
+        }
 
         function addMessage(username, text, isAI = false) {
           const msgDiv = document.createElement('div');
@@ -74,22 +94,23 @@
         function connectWS() {
           if (reconnectTimer) clearTimeout(reconnectTimer);
           
-          const protocol = window.location.protocol === 'https:' ? 'wss://' : 'wss://'; // Force WSS for Cloudflare
+          const protocol = 'wss://'; 
           const endpoint = ENDPOINTS[currentEndpointIndex];
           const wsUrl = protocol + SERVER_HOST + endpoint;
 
-          console.log(`%c[WebSocket] Connecting... %c${wsUrl}`, "color: yellow; font-weight: bold", "color: gray");
+          updateStatus('connecting', '서버 연결 시도 중...');
           
           try {
             socket = new WebSocket(wsUrl);
 
             socket.onopen = () => {
-              console.log('%c[WebSocket] Connected!', "color: green; font-weight: bold");
-              addMessage('System', 'Connected to Live Stream! (WSS Secure)');
-              currentEndpointIndex = 0; // Reset index on success
+              updateStatus('connected', '연결됨 (Secure)');
+              addMessage('System', '스트리밍 서버에 연결되었습니다.');
+              currentEndpointIndex = 0;
             };
 
             socket.onmessage = (event) => {
+              console.log('[WebSocket Data Received]', event.data); // Log all incoming data
               try {
                 const data = JSON.parse(event.data);
                 if (data.type === 'full-text' || data.type === 'text-chunk') {
@@ -105,20 +126,17 @@
             };
 
             socket.onerror = (error) => {
-              console.error('%c[WebSocket] Connection Failed', "color: red; font-weight: bold", error);
+              updateStatus('failed', '연결 실패');
+              console.error('[WebSocket] Error:', error);
             };
 
             socket.onclose = (event) => {
-              console.log('%c[WebSocket] Closed. Code: ' + event.code, "color: orange");
-              
-              // Rotate endpoints on failure
+              updateStatus('failed', '연결 끊김 (재연결 중...)');
               currentEndpointIndex = (currentEndpointIndex + 1) % ENDPOINTS.length;
-              
-              addMessage('System', 'Connection lost. Retrying in 3s...');
               reconnectTimer = setTimeout(connectWS, 3000);
             };
           } catch (e) {
-            console.error('[WebSocket] Setup Exception:', e);
+            console.error('[WebSocket] Exception:', e);
             reconnectTimer = setTimeout(connectWS, 3000);
           }
         }
@@ -130,10 +148,8 @@
               type: 'text-input',
               text: text
             }));
-            addMessage('You', text);
+            addMessage('나', text);
             chatInput.value = '';
-          } else {
-            console.warn('[WebSocket] Cannot send: Socket not connected');
           }
         }
 
@@ -142,7 +158,6 @@
           if (e.key === 'Enter') sendMessage();
         });
 
-        // Initial connection
         connectWS();
       })();
     </script>

@@ -1,5 +1,5 @@
 
-/* Live Streaming Dashboard Overhaul */
+/* Live Streaming Dashboard Overhaul - Fixed Visibility */
 :root {
   --chat-bg: rgba(0, 0, 0, 0.7);
   --input-bg: #18181b;
@@ -19,15 +19,16 @@ body, html, #root {
   font-family: 'Inter', sans-serif;
 }
 
-/* 1. Remove All Existing UI Elements */
-#root > div:not(.new-ui-container),
-header, footer, aside, .cs-sidebar, .cs-chat-container, .cs-main-container,
+/* 1. Selective UI Removal (More careful) */
+/* Hide old UI controllers but DON'T hide the canvas containers */
+header, footer, aside, .cs-sidebar--right, .cs-expansion-panel,
 [class*="Floating"], [class*="Control"], [class*="Button"],
-[class*="Camera"], [class*="Mic"], [class*="Gesture"], [class*="Idle"] {
+[class*="Camera"], [class*="Mic"], [class*="Gesture"], [class*="Idle"],
+.language-selector {
   display: none !important;
 }
 
-/* Ensure Live2D Canvas remains visible and large */
+/* Ensure Live2D Canvas remains visible and backgrounded */
 canvas, #live2d, .live2d-container {
   display: block !important;
   position: fixed !important;
@@ -35,8 +36,14 @@ canvas, #live2d, .live2d-container {
   left: 0 !important;
   width: 100vw !important;
   height: calc(100vh - 60px) !important;
-  z-index: 1 !important;
+  z-index: 5 !important; /* Low but above background */
   pointer-events: auto !important;
+  background: transparent !important;
+}
+
+/* Fix: Ensure the React root or main container doesn't block visibility */
+#root > div {
+  background: transparent !important;
 }
 
 /* 2. New UI Structure */
@@ -48,22 +55,42 @@ canvas, #live2d, .live2d-container {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  z-index: 100;
-  pointer-events: none; /* Allow clicking through to Live2D */
+  z-index: 100; /* High z-index to stay on top */
+  pointer-events: none; 
 }
 
 /* Left Area: Chat Feed (30%) */
 .chat-feed-container {
   width: 30%;
-  min-width: 300px;
+  min-width: 350px;
   flex-grow: 1;
-  background: linear-gradient(to right, var(--chat-bg), transparent);
+  background: linear-gradient(to right, rgba(0,0,0,0.8), transparent);
   padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Push messages to bottom */
+  justify-content: flex-end;
   pointer-events: auto;
 }
+
+/* Connection Status Overlay */
+.status-overlay {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  z-index: 200;
+  pointer-events: auto;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.status-connecting { color: #f1c40f; }
+.status-connected { color: #2ecc71; }
+.status-failed { color: #e74c3c; }
 
 .chat-messages {
   display: flex;
@@ -80,22 +107,29 @@ canvas, #live2d, .live2d-container {
 
 .chat-msg {
   animation: fadeIn 0.3s ease-out;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 8px 12px;
-  border-radius: 8px;
-  max-width: 90%;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px 15px;
+  border-radius: 4px;
+  max-width: 95%;
   word-break: break-word;
+  border-left: 2px solid transparent;
 }
 
 .chat-msg .username {
   font-weight: bold;
   color: var(--accent-color);
   margin-right: 8px;
+  font-size: 0.9rem;
+}
+
+.chat-msg .text {
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* Bottom Area: Input Bar */
@@ -134,9 +168,4 @@ canvas, #live2d, .live2d-container {
   margin-left: 10px;
   font-weight: bold;
   cursor: pointer;
-  transition: filter 0.2s;
-}
-
-.input-bar button:hover {
-  filter: brightness(1.1);
 }
