@@ -1,43 +1,83 @@
 
+const translations = {
+    ko: {
+        "vtuber-name": "버튜버 이름",
+        "nav-about": "정보",
+        "nav-videos": "비디오",
+        "nav-schedule": "일정",
+        "nav-social": "소셜",
+        "header-videos": "최신 비디오",
+        "header-schedule": "방송 일정",
+        "header-social": "팔로우 해주세요!",
+        "vtuber-desc": "버튜버에 대한 간략하고 매력적인 설명입니다.",
+        "Monday": "월요일",
+        "Wednesday": "수요일",
+        "Friday": "금요일",
+        "video-title": "비디오",
+    },
+    en: {
+        "vtuber-name": "VTuber Name",
+        "nav-about": "About",
+        "nav-videos": "Videos",
+        "nav-schedule": "Schedule",
+        "nav-social": "Social",
+        "header-videos": "Latest Videos",
+        "header-schedule": "Streaming Schedule",
+        "header-social": "Follow Me!",
+        "vtuber-desc": "A brief and engaging description of the VTuber.",
+        "Monday": "Monday",
+        "Wednesday": "Wednesday",
+        "Friday": "Friday",
+        "video-title": "Video",
+    }
+};
+
 class VTuberProfile extends HTMLElement {
     constructor() {
         super();
-        const shadow = this.attachShadow({ mode: 'open' });
+        this.attachShadow({ mode: 'open' });
+    }
 
-        const container = document.createElement('div');
-        container.style.textAlign = 'center';
+    connectedCallback() {
+        this.render();
+    }
 
-        const avatar = document.createElement('img');
-        avatar.src = 'https://via.placeholder.com/150';
-        avatar.alt = 'VTuber Avatar';
-        avatar.style.width = '150px';
-        avatar.style.height = '150px';
-        avatar.style.borderRadius = '50%';
+    static get observedAttributes() {
+        return ['name', 'description'];
+    }
 
-        const name = document.createElement('h2');
-        name.textContent = this.getAttribute('name');
+    attributeChangedCallback() {
+        this.render();
+    }
 
-        const description = document.createElement('p');
-        description.textContent = this.getAttribute('description');
+    render() {
+        const nameText = this.getAttribute('name') || '';
+        const descText = this.getAttribute('description') || '';
 
-        container.appendChild(avatar);
-        container.appendChild(name);
-        container.appendChild(description);
-
-        shadow.appendChild(container);
+        this.shadowRoot.innerHTML = `
+            <style>
+                .container { text-align: center; }
+                img { width: 150px; height: 150px; border-radius: 50%; }
+                h2 { margin-top: 10px; }
+            </style>
+            <div class="container">
+                <img src="https://via.placeholder.com/150" alt="VTuber Avatar">
+                <h2>${nameText}</h2>
+                <p>${descText}</p>
+            </div>
+        `;
     }
 }
 
 customElements.define('vtuber-profile', VTuberProfile);
 
-// Placeholder data
 const videos = [
-    { title: 'Video 1', thumbnail: 'https://via.placeholder.com/300x150' },
-    { title: 'Video 2', thumbnail: 'https://via.placeholder.com/300x150' },
-    { title: 'Video 3', thumbnail: 'https://via.placeholder.com/300x150' },
+    { id: 1, thumbnail: 'https://via.placeholder.com/300x150' },
+    { id: 2, thumbnail: 'https://via.placeholder.com/300x150' },
+    { id: 3, thumbnail: 'https://via.placeholder.com/300x150' },
 ];
 
-const schedule = {
+const scheduleData = {
     Monday: '10 PM - 12 AM',
     Wednesday: '10 PM - 12 AM',
     Friday: '10 PM - 12 AM',
@@ -49,31 +89,66 @@ const socialLinks = {
     Twitch: '#',
 };
 
-// Populate sections
-const videoGallery = document.querySelector('.video-gallery');
-videos.forEach(video => {
-    const videoElement = document.createElement('div');
-    videoElement.innerHTML = `
-        <img src="${video.thumbnail}" alt="${video.title}" style="width:100%">
-        <p>${video.title}</p>
-    `;
-    videoGallery.appendChild(videoElement);
+function updateLanguage(lang) {
+    // Update static elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+        }
+    });
+
+    // Update VTuber Profile
+    const profile = document.getElementById('profile');
+    if (profile) {
+        profile.setAttribute('name', translations[lang]['vtuber-name']);
+        profile.setAttribute('description', translations[lang]['vtuber-desc']);
+    }
+
+    // Update Videos
+    const videoGallery = document.querySelector('.video-gallery');
+    videoGallery.innerHTML = '';
+    videos.forEach(video => {
+        const videoElement = document.createElement('div');
+        videoElement.innerHTML = `
+            <img src="${video.thumbnail}" alt="Video" style="width:100%">
+            <p>${translations[lang]['video-title']} ${video.id}</p>
+        `;
+        videoGallery.appendChild(videoElement);
+    });
+
+    // Update Schedule
+    const scheduleContainer = document.querySelector('.schedule-container');
+    scheduleContainer.innerHTML = '';
+    for (const day in scheduleData) {
+        const scheduleElement = document.createElement('div');
+        const translatedDay = translations[lang][day] || day;
+        scheduleElement.innerHTML = `<strong>${translatedDay}:</strong> ${scheduleData[day]}`;
+        scheduleContainer.appendChild(scheduleElement);
+    }
+
+    // Update Social Links (platforms don't change names usually)
+    const socialLinksContainer = document.querySelector('.social-links');
+    socialLinksContainer.innerHTML = '';
+    for (const platform in socialLinks) {
+        const linkElement = document.createElement('a');
+        linkElement.href = socialLinks[platform];
+        linkElement.textContent = platform;
+        linkElement.style.margin = '0 10px';
+        linkElement.style.color = 'white';
+        linkElement.style.textDecoration = 'none';
+        socialLinksContainer.appendChild(linkElement);
+    }
+
+    localStorage.setItem('preferred-lang', lang);
+}
+
+const langSelect = document.getElementById('lang-select');
+langSelect.addEventListener('change', (e) => {
+    updateLanguage(e.target.value);
 });
 
-const scheduleContainer = document.querySelector('.schedule-container');
-for (const day in schedule) {
-    const scheduleElement = document.createElement('div');
-    scheduleElement.innerHTML = `<strong>${day}:</strong> ${schedule[day]}`;
-    scheduleContainer.appendChild(scheduleElement);
-}
-
-const socialLinksContainer = document.querySelector('.social-links');
-for (const platform in socialLinks) {
-    const linkElement = document.createElement('a');
-    linkElement.href = socialLinks[platform];
-    linkElement.textContent = platform;
-    linkElement.style.margin = '0 10px';
-    linkElement.style.color = 'white';
-    linkElement.style.textDecoration = 'none';
-    socialLinksContainer.appendChild(linkElement);
-}
+// Initialize language
+const savedLang = localStorage.getItem('preferred-lang') || 'en';
+langSelect.value = savedLang;
+updateLanguage(savedLang);

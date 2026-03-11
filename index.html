@@ -9,37 +9,45 @@
 </head>
 <body>
     <header>
-        <h1>VTuber Name</h1>
+        <div class="header-content">
+            <h1 data-i18n="vtuber-name">VTuber Name</h1>
+            <div class="language-selector">
+                <select id="lang-select">
+                    <option value="ko">한국어</option>
+                    <option value="en" selected>English</option>
+                </select>
+            </div>
+        </div>
         <nav>
             <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#videos">Videos</a></li>
-                <li><a href="#schedule">Schedule</a></li>
-                <li><a href="#social">Social</a></li>
+                <li><a href="#about" data-i18n="nav-about">About</a></li>
+                <li><a href="#videos" data-i18n="nav-videos">Videos</a></li>
+                <li><a href="#schedule" data-i18n="nav-schedule">Schedule</a></li>
+                <li><a href="#social" data-i18n="nav-social">Social</a></li>
             </ul>
         </nav>
     </header>
 
     <main>
         <section id="about">
-            <vtuber-profile name="VTuber Name" description="A brief and engaging description of the VTuber."></vtuber-profile>
+            <vtuber-profile id="profile" name="VTuber Name" description="A brief and engaging description of the VTuber."></vtuber-profile>
         </section>
 
         <section id="videos">
-            <h2>Latest Videos</h2>
+            <h2 data-i18n="header-videos">Latest Videos</h2>
             <div class="video-gallery">
                 </div>
         </section>
 
         <section id="schedule">
-            <h2>Streaming Schedule</h2>
+            <h2 data-i18n="header-schedule">Streaming Schedule</h2>
             <div class="schedule-container">
                 </div>
         </section>
     </main>
 
     <footer id="social">
-        <h2>Follow Me!</h2>
+        <h2 data-i18n="header-social">Follow Me!</h2>
         <div class="social-links">
             </div>
     </footer>
