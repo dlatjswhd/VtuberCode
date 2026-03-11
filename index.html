@@ -18,7 +18,7 @@
         })(window, document, "clarity", "script", "vu4avbco5e");
     </script>
     <meta charset="UTF-8" />
-    <title>Open-LLM-Vtuber</title>
+    <title>Open-LLM-Vtuber - Live Streaming</title>
     <script type="module" crossorigin src="./assets/main-CKgUHFa9.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/main-QEkl09-0.css">
     <link rel="stylesheet" href="./assets/custom.css">
@@ -26,5 +26,100 @@
 
   <body>
     <div id="root"></div>
+
+    <!-- New Custom Chat System Overlay -->
+    <div class="new-ui-container">
+      <div class="chat-feed-container">
+        <div id="chat-messages" class="chat-messages">
+          <!-- Messages will appear here -->
+          <div class="chat-msg">
+            <span class="username">System</span>
+            <span class="text">Connecting to Live Streaming system...</span>
+          </div>
+        </div>
+      </div>
+      <div class="input-bar">
+        <input type="text" id="chat-input" placeholder="Enter message to VTuber..." autocomplete="off">
+        <button id="send-btn">SEND</button>
+      </div>
+    </div>
+
+    <script>
+      // Custom Chat Logic
+      (function() {
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        let socket = null;
+
+        function addMessage(username, text, isAI = false) {
+          const msgDiv = document.createElement('div');
+          msgDiv.className = 'chat-msg';
+          if (isAI) msgDiv.style.borderLeft = '4px solid #9147ff';
+          
+          msgDiv.innerHTML = `
+            <span class="username">${username}</span>
+            <span class="text">${text}</span>
+          `;
+          chatMessages.appendChild(msgDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function connectWS() {
+          socket = new WebSocket('ws://localhost:12393/client-ws');
+
+          socket.onopen = () => {
+            console.log('Connected to VTuber backend');
+            addMessage('System', 'Connected to backend. Ready to stream!');
+          };
+
+          socket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              // Handle AI text responses
+              if (data.type === 'full-text' || data.type === 'text-chunk') {
+                if (data.text && data.text.trim()) {
+                  // If it's a full text or we want to show it as it comes
+                  // For simplicity, let's show full text
+                  if (data.type === 'full-text') {
+                    addMessage('VTuber', data.text, true);
+                  }
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing WS message', e);
+            }
+          };
+
+          socket.onclose = () => {
+            addMessage('System', 'Disconnected. Reconnecting...');
+            setTimeout(connectWS, 3000);
+          };
+        }
+
+        function sendMessage() {
+          const text = chatInput.value.trim();
+          if (text && socket && socket.readyState === WebSocket.OPEN) {
+            // Send to backend
+            socket.send(JSON.stringify({
+              type: 'text-input',
+              text: text
+            }));
+            
+            // Add to local UI
+            addMessage('You', text);
+            chatInput.value = '';
+          }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') sendMessage();
+        });
+
+        // Start connection
+        connectWS();
+      })();
+    </script>
   </body>
 </html>
