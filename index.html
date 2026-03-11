@@ -45,12 +45,18 @@
     </div>
 
     <script>
-      // Custom Chat Logic
+      // Custom Chat Logic - Enhanced for Cloudflare Tunnel & Debugging
       (function() {
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
         let socket = null;
+        let reconnectTimer = null;
+        
+        // Configuration
+        const SERVER_HOST = 'bristol-minister-dis-perl.trycloudflare.com';
+        const ENDPOINTS = ['/client-ws', '/ws']; // Try multiple common endpoints if needed
+        let currentEndpointIndex = 0;
 
         function addMessage(username, text, isAI = false) {
           const msgDiv = document.createElement('div');
@@ -66,49 +72,68 @@
         }
 
         function connectWS() {
-          socket = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/client-ws');
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          
+          const protocol = window.location.protocol === 'https:' ? 'wss://' : 'wss://'; // Force WSS for Cloudflare
+          const endpoint = ENDPOINTS[currentEndpointIndex];
+          const wsUrl = protocol + SERVER_HOST + endpoint;
 
-          socket.onopen = () => {
-            console.log('Connected to VTuber backend');
-            addMessage('System', 'Connected to backend. Ready to stream!');
-          };
+          console.log(`%c[WebSocket] Connecting... %c${wsUrl}`, "color: yellow; font-weight: bold", "color: gray");
+          
+          try {
+            socket = new WebSocket(wsUrl);
 
-          socket.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              // Handle AI text responses
-              if (data.type === 'full-text' || data.type === 'text-chunk') {
-                if (data.text && data.text.trim()) {
-                  // If it's a full text or we want to show it as it comes
-                  // For simplicity, let's show full text
-                  if (data.type === 'full-text') {
-                    addMessage('VTuber', data.text, true);
+            socket.onopen = () => {
+              console.log('%c[WebSocket] Connected!', "color: green; font-weight: bold");
+              addMessage('System', 'Connected to Live Stream! (WSS Secure)');
+              currentEndpointIndex = 0; // Reset index on success
+            };
+
+            socket.onmessage = (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'full-text' || data.type === 'text-chunk') {
+                  if (data.text && data.text.trim()) {
+                    if (data.type === 'full-text') {
+                      addMessage('VTuber', data.text, true);
+                    }
                   }
                 }
+              } catch (e) {
+                console.error('[WebSocket] Data Parse Error:', e);
               }
-            } catch (e) {
-              console.error('Error parsing WS message', e);
-            }
-          };
+            };
 
-          socket.onclose = () => {
-            addMessage('System', 'Disconnected. Reconnecting...');
-            setTimeout(connectWS, 3000);
-          };
+            socket.onerror = (error) => {
+              console.error('%c[WebSocket] Connection Failed', "color: red; font-weight: bold", error);
+            };
+
+            socket.onclose = (event) => {
+              console.log('%c[WebSocket] Closed. Code: ' + event.code, "color: orange");
+              
+              // Rotate endpoints on failure
+              currentEndpointIndex = (currentEndpointIndex + 1) % ENDPOINTS.length;
+              
+              addMessage('System', 'Connection lost. Retrying in 3s...');
+              reconnectTimer = setTimeout(connectWS, 3000);
+            };
+          } catch (e) {
+            console.error('[WebSocket] Setup Exception:', e);
+            reconnectTimer = setTimeout(connectWS, 3000);
+          }
         }
 
         function sendMessage() {
           const text = chatInput.value.trim();
           if (text && socket && socket.readyState === WebSocket.OPEN) {
-            // Send to backend
             socket.send(JSON.stringify({
               type: 'text-input',
               text: text
             }));
-            
-            // Add to local UI
             addMessage('You', text);
             chatInput.value = '';
+          } else {
+            console.warn('[WebSocket] Cannot send: Socket not connected');
           }
         }
 
@@ -117,7 +142,7 @@
           if (e.key === 'Enter') sendMessage();
         });
 
-        // Start connection
+        // Initial connection
         connectWS();
       })();
     </script>
